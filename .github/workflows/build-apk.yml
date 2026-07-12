@@ -1,4 +1,4 @@
-name: Build Custom Telegram APK (With Cache)
+name: Build Custom Telegram APK (Final Repair)
 
 on:
   workflow_dispatch:
@@ -18,7 +18,7 @@ jobs:
       with:
         distribution: 'zulu'
         java-version: '17'
-        cache: 'gradle' # 👈 這行會自動快取下載好的依賴，下次編譯直接省下 10 分鐘！
+        cache: 'gradle' # 👈 這行會自動讀取上次儲存的快取，幫你省下大量下載時間！
 
     # 3. 自動注入你的 api_id 和 api_hash
     - name: Inject API Keys into BuildVars.java
@@ -31,17 +31,17 @@ jobs:
         sed -i "s/public static String APP_HASH = .*/$SED_HASH/" $FILE_PATH
         echo "✅ 憑證注入成功！"
 
-    # 4. 執行 Android 打包指令（跳過程式碼規範檢查以加速）
+    # 4. 執行 Android 打包指令（跳過程式碼規範檢查、跳過測試以全面加速）
     - name: Build with Gradle
       run: |
         chmod +x gradlew
         ./gradlew assembleDebug -x test -x lint --no-daemon
 
-    # 5. 精準抓取 Telegram 特殊架構下的所有 APK 檔案並上傳
+    # 5. 🔥 終極修復：從根目錄開始，全域地毯式搜尋任何副檔名為 .apk 的檔案並上傳
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
         name: Custom-Telegram-Debug-APK
-        if-no-files-found: error # 如果路徑還是找不到會立刻報錯提示
+        if-no-files-found: error # 如果整台虛擬機器真的完全沒編譯出 APK 才會報錯
         path: |
-          TMessagesProj/build/outputs/apk/**/*.apk
+          ./**/*.apk
